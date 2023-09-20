@@ -131,7 +131,7 @@ EXPORT_SYMBOL(synchronize_irq);
 #ifdef CONFIG_SMP
 cpumask_var_t irq_default_affinity;
 
-static bool __irq_can_set_affinity(struct irq_desc *desc)
+bool __irq_can_set_affinity(struct irq_desc *desc)
 {
 	if (!desc || !irqd_can_balance(&desc->irq_data) ||
 	    !desc->irq_data.chip || !desc->irq_data.chip->irq_set_affinity)
@@ -427,6 +427,9 @@ int irq_setup_affinity(struct irq_desc *desc)
 	cpumask_and(&mask, cpu_online_mask, set);
 	if (cpumask_empty(&mask))
 		cpumask_copy(&mask, cpu_online_mask);
+
+	if (irqd_has_set(&desc->irq_data, IRQD_PERF_CRITICAL))
+		cpumask_copy(&mask, cpu_perf_mask);
 
 	if (node != NUMA_NO_NODE) {
 		const struct cpumask *nodemask = cpumask_of_node(node);
